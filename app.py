@@ -1,7 +1,8 @@
 import cv2
+from mtcnn import MTCNN
 
-# Load the pre-trained Haar Cascade model for face detection
-face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+# Initialize the MTCNN face detector
+detector = MTCNN()
 
 # Start capturing video from the webcam
 cap = cv2.VideoCapture(0)
@@ -12,15 +13,19 @@ while True:
     if not ret:
         break
 
-    # Convert the frame to grayscale (required for face detection)
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
     # Detect faces in the frame
-    faces = face_cascade.detectMultiScale(gray, 1.1, 4)
+    faces = detector.detect_faces(frame)
 
     # Draw a rectangle around each detected face
-    for (x, y, w, h) in faces:
-        cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
+    for result in faces:
+        x, y, w, h = result['box']
+        # Adjust the rectangle if it exceeds the frame boundaries
+        frame_height, frame_width = frame.shape[:2]
+        x_end = min(x + w, frame_width - 1)
+        y_end = min(y + h, frame_height - 1)
+        x_start = max(0, x)
+        y_start = max(0, y)
+        cv2.rectangle(frame, (x_start, y_start), (x_end, y_end), (255, 0, 0), 2)
 
     # Display the frame with detected faces
     cv2.imshow('Face Detection', frame)
